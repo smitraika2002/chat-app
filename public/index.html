@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simple Chat</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- These lines let people add the chat to their home screen like an app -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0a84ff" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Chat" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 </head>
 <body>
   <!-- Screen 1: pick a display name -->
@@ -20,18 +30,48 @@
   <!-- Screen 2: the chat room (hidden until you join) -->
   <div id="chat-screen" class="chat-screen hidden">
     <header class="chat-header">
-      <h2>General</h2>
-      <span id="me-label" class="me-label"></span>
+      <div class="header-title">
+        <h2>General</h2>
+        <!-- Tapping this opens the list of who's online -->
+        <button id="online-button" class="online-button" type="button">
+          <span class="online-dot"></span><span id="online-count">0 online</span>
+        </button>
+      </div>
+      <div class="header-actions">
+        <button id="sound-button" class="icon-button" type="button" title="Sound on/off">🔔</button>
+        <button id="notify-button" class="icon-button hidden" type="button" title="Turn on notifications">📳</button>
+      </div>
+
+      <!-- Dropdown list of online users -->
+      <div id="online-panel" class="online-panel hidden">
+        <div class="online-panel-title">Online now</div>
+        <ul id="online-list"></ul>
+      </div>
     </header>
 
     <main id="messages" class="messages"></main>
 
     <div id="typing" class="typing"></div>
 
+    <!-- Shows "Replying to ..." above the message box -->
+    <div id="reply-bar" class="reply-bar hidden">
+      <div class="reply-bar-text">
+        <div class="reply-bar-name" id="reply-bar-name"></div>
+        <div class="reply-bar-preview" id="reply-bar-preview"></div>
+      </div>
+      <button id="reply-cancel" class="icon-button" type="button" aria-label="Cancel reply">✕</button>
+    </div>
+
     <form id="message-form" class="composer">
-      <input id="message-input" type="text" placeholder="Message" maxlength="500" autocomplete="off" />
+      <input id="message-input" type="text" placeholder="Message" maxlength="1000" autocomplete="off" />
       <button type="submit" aria-label="Send">➤</button>
     </form>
+  </div>
+
+  <!-- Pop-up menu that appears when you tap a message -->
+  <div id="message-menu" class="message-menu hidden">
+    <div id="menu-emojis" class="menu-emojis"></div>
+    <button id="menu-reply" class="menu-reply" type="button">↩ Reply</button>
   </div>
 
   <!-- Socket.IO client library is served automatically by the server -->

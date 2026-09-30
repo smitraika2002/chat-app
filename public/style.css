@@ -10,6 +10,10 @@
   --mine-text: #ffffff;
   --theirs: #e9e9eb;      /* other people's bubbles */
   --theirs-text: #1c1c1e;
+  --chip: #f2f2f7;        /* reaction chips */
+  --chip-mine: #d6e9ff;
+  --online: #34c759;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 /* Dark mode follows the phone/computer's system setting */
@@ -22,6 +26,10 @@
     --border: #2c2c2e;
     --theirs: #2c2c2e;
     --theirs-text: #f2f2f7;
+    --chip: #2c2c2e;
+    --chip-mine: #0a3d73;
+    --online: #30d158;
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -35,6 +43,8 @@ html, body {
 }
 
 .hidden { display: none !important; }
+
+button { font-family: inherit; color: inherit; }
 
 /* ---------- Join screen ---------- */
 .join-screen {
@@ -55,7 +65,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
 }
 
 .join-card h1 { font-size: 26px; }
@@ -73,7 +83,8 @@ input {
 }
 input:focus { border-color: var(--mine); }
 
-button {
+.join-card button,
+.composer button {
   font-size: 16px;
   font-weight: 600;
   border: none;
@@ -96,68 +107,220 @@ button:active { opacity: 0.8; }
 }
 
 .chat-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
+  padding: 10px 12px 10px 16px;
   border-bottom: 1px solid var(--border);
 }
-.chat-header h2 { font-size: 17px; }
-.me-label { color: var(--muted); font-size: 13px; }
+.header-title h2 { font-size: 17px; }
 
-/* Scrollable list of messages */
+.online-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--online);
+}
+
+.header-actions { display: flex; gap: 4px; }
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+.icon-button:hover { background: var(--bg); }
+
+/* Dropdown with the list of online people */
+.online-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 12px;
+  z-index: 20;
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+}
+.online-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 8px 8px;
+}
+.online-panel ul { list-style: none; }
+.online-panel li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  font-size: 15px;
+}
+.online-panel li .you { color: var(--muted); font-size: 13px; }
+
+/* ---------- Avatars ---------- */
+.avatar {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  user-select: none;
+}
+
+/* ---------- Messages ---------- */
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 12px 12px 4px;
   display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+
+/* One message row = avatar + (name, bubble, reactions, time) */
+.row {
+  display: flex;
+  align-items: flex-start;
   gap: 8px;
+  max-width: 80%;
+  align-self: flex-start;       /* others: left */
+  margin-top: 10px;             /* space before a new group */
 }
+.row.mine { align-self: flex-end; flex-direction: row-reverse; } /* me: right */
+.row.mine .avatar { display: none; }
 
-/* One message = name + bubble + time */
-.msg {
+/* Messages that continue a group: no avatar, no name, less space */
+.row.continued { margin-top: 0; }
+.row.continued .avatar { visibility: hidden; }
+.row.continued .name { display: none; }
+
+.body {
   display: flex;
   flex-direction: column;
-  max-width: 75%;
-  align-self: flex-start;       /* others: left */
+  align-items: flex-start;
+  min-width: 0;
 }
-.msg.mine { align-self: flex-end; align-items: flex-end; } /* me: right */
+.row.mine .body { align-items: flex-end; }
 
-.msg .name {
+.name {
   font-size: 12px;
   color: var(--muted);
   margin: 0 12px 2px;
 }
-.msg.mine .name { display: none; } /* no need to show my own name */
+.row.mine .name { display: none; } /* no need to show my own name */
 
 .bubble {
-  padding: 9px 14px;
+  padding: 8px 13px;
   border-radius: 18px;
   background: var(--theirs);
   color: var(--theirs-text);
   line-height: 1.35;
-  word-wrap: break-word;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: filter 0.15s;
 }
-.msg.mine .bubble {
+.bubble:hover { filter: brightness(0.96); }
+.row.mine .bubble {
   background: var(--mine);
   color: var(--mine-text);
 }
 
-.msg .time {
+/* Softer corners where bubbles in a group touch, like iMessage */
+.row.has-next:not(.mine) .bubble { border-bottom-left-radius: 6px; }
+.row.continued:not(.mine) .bubble { border-top-left-radius: 6px; }
+.row.mine.has-next .bubble { border-bottom-right-radius: 6px; }
+.row.mine.continued .bubble { border-top-right-radius: 6px; }
+
+/* Flash a message when you jump to it from a reply */
+.row.flash .bubble { animation: flash 1.2s ease; }
+@keyframes flash {
+  0%, 40% { box-shadow: 0 0 0 3px var(--online); }
+  100% { box-shadow: 0 0 0 3px transparent; }
+}
+
+/* The quoted message inside a reply */
+.quote {
+  border-left: 3px solid currentColor;
+  background: rgba(127, 127, 127, 0.15);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin: 2px 0 6px;
+  font-size: 13px;
+  opacity: 0.9;
+  max-width: 100%;
+}
+.quote-name { font-weight: 600; }
+.quote-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Reaction chips under a bubble */
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+.reactions:empty { display: none; }
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--chip);
+  cursor: pointer;
+}
+.chip.mine { background: var(--chip-mine); border-color: var(--mine); }
+
+.time {
   font-size: 11px;
   color: var(--muted);
   margin: 2px 12px 0;
 }
+.row.has-next .time { display: none; } /* only the last message in a group shows the time */
 
 /* "Alex joined the chat" */
 .notice {
   align-self: center;
   font-size: 12px;
   color: var(--muted);
-  padding: 4px 0;
+  padding: 8px 0 2px;
 }
 
 /* "Alex is typing..." */
@@ -169,12 +332,31 @@ button:active { opacity: 0.8; }
   font-style: italic;
 }
 
-/* Message box at the bottom */
+/* ---------- Reply bar above the message box ---------- */
+.reply-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px;
+  padding: 6px 6px 6px 12px;
+  border-left: 3px solid var(--mine);
+  background: var(--bg);
+  border-radius: 10px;
+}
+.reply-bar-text { flex: 1; min-width: 0; font-size: 13px; }
+.reply-bar-name { font-weight: 600; color: var(--mine); }
+.reply-bar-preview {
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Message box at the bottom ---------- */
 .composer {
   display: flex;
   gap: 8px;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--border);
+  padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
 }
 .composer button {
   width: 44px;
@@ -183,3 +365,46 @@ button:active { opacity: 0.8; }
   font-size: 18px;
 }
 .composer button:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------- Pop-up menu when you tap a message ---------- */
+.message-menu {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  animation: pop 0.12s ease-out;
+}
+@keyframes pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.menu-emojis { display: flex; gap: 2px; }
+.menu-emojis button {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  font-size: 22px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.menu-emojis button:hover { transform: scale(1.2); }
+.menu-emojis button.picked { background: var(--chip-mine); }
+.menu-reply {
+  border: none;
+  border-left: 1px solid var(--border);
+  background: none;
+  padding: 0 12px 0 10px;
+  height: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
