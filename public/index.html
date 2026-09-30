@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Chat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Screen 1: pick a display name -->
+  <div id="join-screen" class="join-screen">
+    <form id="join-form" class="join-card">
+      <h1>💬 Simple Chat</h1>
+      <p>Pick a name to join the room</p>
+      <input id="name-input" type="text" placeholder="Your name" maxlength="20" autocomplete="off" autofocus />
+      <button type="submit">Join</button>
+    </form>
+  </div>
+
+  <!-- Screen 2: the chat room (hidden until you join) -->
+  <div id="chat-screen" class="chat-screen hidden">
+    <header class="chat-header">
+      <h2>General</h2>
+      <span id="me-label" class="me-label"></span>
+    </header>
+
+    <main id="messages" class="messages"></main>
+
+    <div id="typing" class="typing"></div>
+
+    <form id="message-form" class="composer">
+      <input id="message-input" type="text" placeholder="Message" maxlength="500" autocomplete="off" />
+      <button type="submit" aria-label="Send">➤</button>
+    </form>
+  </div>
+
+  <!-- Socket.IO client library is served automatically by the server -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
