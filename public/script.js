@@ -168,8 +168,9 @@ function setAuthMode(mode) {
   hide($("auth-error"));
 }
 
-function authError(text) {
+function authError(text, isGood = false) {
   $("auth-error").textContent = text;
+  $("auth-error").classList.toggle("success", isGood);
   show($("auth-error"));
 }
 
@@ -200,7 +201,7 @@ $("auth-form").addEventListener("submit", async (e) => {
       if (!data.session) {
         // Email confirmation is turned on in Supabase
         setAuthMode("login");
-        return authError("Account created! Check your email to confirm it, then log in.");
+        return authError("Account created! Check your email to confirm it, then log in.", true);
       }
       await enterApp(data.session.user);
     } else {
@@ -1189,7 +1190,7 @@ function setModalMode(mode) {
   document.querySelectorAll("#modal-tabs .tab").forEach((t) => t.classList.toggle("active", t.dataset.mode === mode));
   $("modal-tabs").classList.toggle("hidden", mode === "add");
   $("group-name").classList.toggle("hidden", mode !== "group");
-  $("modal-create").classList.toggle("hidden", mode === "dm");
+  $("modal-create").style.visibility = mode === "dm" ? "hidden" : "visible"; // keeps the title centered
   $("modal-create").textContent = mode === "add" ? "Add" : "Create";
   $("modal-title").textContent = { dm: "New chat", group: "New group", add: "Add people" }[mode];
   renderPicked();
@@ -1237,29 +1238,50 @@ function note(text) {
   return li;
 }
 
+// "joined today", "joined yesterday", "joined Sep 28"
+function joinedText(date) {
+  const label = formatListTime(date);
+  if (label === "Yesterday") return "joined yesterday";
+  if (/\d:\d\d/.test(label)) return "joined today";
+  return "joined " + new Date(date).toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
 async function searchUsers() {
   const list = $("user-results");
   const q = $("user-search").value.trim();
-  if (!q) {
-    list.innerHTML = "";
-    list.appendChild(note("Type a username to find someone."));
-    return;
+
+  // With an empty search box, list everyone who has joined; otherwise filter by name
+  let query = db.from("profiles").select("id, username, avatar_url, created_at").neq("id", me.id);
+  if (q) {
+    const pattern = "%" + q.replace(/[\\%_]/g, (c) => "\\" + c) + "%"; // search anywhere in the name
+    query = query.ilike("username", pattern).order("username").limit(50);
+  } else {
+    query = query.order("created_at", { ascending: false }).limit(200);
   }
-  const pattern = "%" + q.replace(/[\\%_]/g, (c) => "\\" + c) + "%"; // search anywhere in the name
-  const { data, error } = await db.from("profiles").select("id, username, avatar_url")
-    .ilike("username", pattern).neq("id", me.id).order("username").limit(20);
+  const { data, error } = await query;
   if (q !== $("user-search").value.trim()) return; // you kept typing
   list.innerHTML = "";
-  if (error) return list.appendChild(note("Search failed. Try again."));
-  if (data.length === 0) return list.appendChild(note(`No one called "${q}" yet.`));
+  if (error) return list.appendChild(note("Couldn't load people. Try again."));
+  if (data.length === 0) {
+    return list.appendChild(note(q ? `No one called "${q}" yet.` : "No one else has joined yet. Share your link with friends!"));
+  }
 
-  for (const p of data) {
+  // People who are online right now go first
+  const people = [...data].sort((a, b) => onlineIds.has(b.id) - onlineIds.has(a.id));
+  for (const p of people) {
     profiles.set(p.id, p);
     const already = modalMode === "add" && currentMembers.includes(p.id);
     const li = document.createElement("li");
+
     const label = document.createElement("span");
     label.className = "grow";
-    label.textContent = p.username;
+    const name = document.createElement("div");
+    name.textContent = p.username;
+    const sub = document.createElement("div");
+    sub.className = "person-sub" + (onlineIds.has(p.id) ? " online" : "");
+    sub.textContent = onlineIds.has(p.id) ? "online" : joinedText(p.created_at);
+    label.append(name, sub);
+
     const check = document.createElement("span");
     check.className = "check";
     if (already) check.textContent = "in group";

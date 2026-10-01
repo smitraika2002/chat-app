@@ -716,3 +716,10 @@ input:focus { border-color: var(--mine); }
   font-size: 14px;
   text-align: center;
 }
+
+/* Green text for good news on the login screen */
+.error.success { color: var(--online); }
+
+/* "online" / "joined today" under names in the new-chat window */
+.person-sub { font-size: 12px; color: var(--muted); }
+.person-sub.online { color: var(--online); }
